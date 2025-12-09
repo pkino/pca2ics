@@ -1,0 +1,28 @@
+{
+  "name": "pca2ics",
+  "version": "1.0.0",
+  "description": "PCA公益法人会計V.12 → ICS財務処理db 変換スクリプト",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "push": "clasp push",
+    "pull": "clasp pull",
+    "open": "clasp open",
+    "deploy": "npm run build && clasp push",
+    "login": "clasp login"
+  },
+  "devDependencies": {
+    "@types/google-apps-script": "^1.0.83",
+    "@google/clasp": "^2.4.2",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "google-apps-script",
+    "typescript",
+    "pca",
+    "ics",
+    "accounting"
+  ],
+  "author": "",
+  "license": "MIT"
+}
