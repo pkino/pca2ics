@@ -3,6 +3,7 @@
     "target": "ES2019",
     "module": "None",
     "lib": ["ES2019"],
+    "types": ["google-apps-script"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
