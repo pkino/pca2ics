@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "PCA公益法人会計V.12 → ICS財務処理db 変換スクリプト",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp src/appsscript.json dist/",
     "watch": "tsc -w",
     "push": "clasp push",
     "pull": "clasp pull",
