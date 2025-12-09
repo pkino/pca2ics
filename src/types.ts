@@ -4,7 +4,6 @@
 
 /** 設定オブジェクトの型 */
 interface Config {
-  SPREADSHEET_ID: string;
   DEFAULT_SOURCE_SHEET: string;
   SHEETS: {
     SOURCE_DATA: string;

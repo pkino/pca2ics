@@ -3,9 +3,6 @@
  */
 
 const CONFIG: Config = {
-  // スプレッドシートID（実行時に設定）
-  SPREADSHEET_ID: '',
-
   // デフォルトのシート名（動的に検出、YYYYMM形式で最新のものを選択）
   DEFAULT_SOURCE_SHEET: '',
 

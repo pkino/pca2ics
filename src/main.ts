@@ -107,7 +107,6 @@ function convertPCAtoICS(): void {
 
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    CONFIG.SPREADSHEET_ID = ss.getId();
 
     // 元データシートを選択
     const sourceSheetName = selectSourceSheet(ss);
@@ -207,7 +206,6 @@ function convertSpecificSheet(sheetName: string): void {
 
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    CONFIG.SPREADSHEET_ID = ss.getId();
 
     // シートの存在確認
     const sheet = ss.getSheetByName(sheetName);
