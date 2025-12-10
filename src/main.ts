@@ -142,6 +142,9 @@ function convertPCAtoICS(): void {
     // エラーログ出力（必ず実行）
     writeErrorLog(ss, ERROR_LOGS);
 
+    // すべてのシート操作を確実に完了させる
+    SpreadsheetApp.flush();
+
     Logger.log('=== 変換完了 ===');
 
     // エラーの有無で完了メッセージを変える
@@ -240,6 +243,9 @@ function convertSpecificSheet(sheetName: string): void {
 
     // エラーログ出力（必ず実行）
     writeErrorLog(ss, ERROR_LOGS);
+
+    // すべてのシート操作を確実に完了させる
+    SpreadsheetApp.flush();
 
     Logger.log('=== 変換完了 ===');
 
