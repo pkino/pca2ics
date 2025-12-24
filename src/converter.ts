@@ -213,13 +213,14 @@ function convertJournal(
 ): ICSOutputRow {
   const baseRow = journal.baseRow;
   const COL = CONFIG.COLUMNS.SOURCE;
+  const denpyoNo = baseRow[COL.DENPYO_NO] as string | number;
 
   // 日付変換
   const date = formatDate(baseRow[COL.DATE] as string | number);
 
   // 科目コード変換
-  const karikataCode = convertKamokuCode(journal.karikataItem.kamoku, kamokuMapping.codeMap);
-  const kashikataCode = convertKamokuCode(journal.kashikataItem.kamoku, kamokuMapping.codeMap);
+  const karikataCode = convertKamokuCode(journal.karikataItem.kamoku, kamokuMapping.codeMap, denpyoNo);
+  const kashikataCode = convertKamokuCode(journal.kashikataItem.kamoku, kamokuMapping.codeMap, denpyoNo);
 
   // 科目名を科目対応表から取得（なければ元データの名称を使用）
   const karikataName = kamokuMapping.nameMap[String(karikataCode)] || journal.karikataItem.name || '';
@@ -229,7 +230,8 @@ function convertJournal(
   const taxCode = selectBestTaxCode(
     journal.karikataItem.taxCode,
     journal.kashikataItem.taxCode,
-    taxMapping
+    taxMapping,
+    denpyoNo
   );
 
   // 税額（借方消費税額を使用）
