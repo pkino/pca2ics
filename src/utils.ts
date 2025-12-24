@@ -100,12 +100,12 @@ function convertKamokuCode(
  * 税区分変換: PCA公益 → ICS db形式
  */
 function convertTaxCode(pcaCode: string | number | null | undefined, taxMapping: TaxMapping): string {
-  if (!pcaCode) return '04'; // デフォルトは不課税
+  if (!pcaCode) return ''; // デフォルトは空欄
 
   const icsCode = taxMapping[String(pcaCode)];
 
   if (!icsCode) {
-    const errorMsg = `税区分 ${pcaCode} のマッピングが見つかりません。デフォルト(04)を使用します`;
+    const errorMsg = `税区分 ${pcaCode} のマッピングが見つかりません。空欄を使用します`;
 
     ERROR_LOGS.push({
       timestamp: new Date(),
@@ -118,7 +118,7 @@ function convertTaxCode(pcaCode: string | number | null | undefined, taxMapping:
     });
 
     Logger.log(`警告: ${errorMsg}`);
-    return '04';
+    return '';
   }
 
   return icsCode;
@@ -134,7 +134,7 @@ function selectBestTaxCode(
 ): string {
   // 両方とも値がない場合
   if (!karikataTaxCode && !kashikataTaxCode) {
-    return convertTaxCode('00', taxMapping);
+    return '';
   }
 
   // 片方だけの場合
