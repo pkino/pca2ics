@@ -65,7 +65,8 @@ function formatDate(dateValue: string | number | Date): string {
  */
 function convertKamokuCode(
   srcCode: string | number | null | undefined,
-  mapping: { [key: string]: string | number }
+  mapping: { [key: string]: string | number },
+  denpyoNo?: string | number
 ): string {
   if (!srcCode) return '';
 
@@ -80,16 +81,16 @@ function convertKamokuCode(
 
     ERROR_LOGS.push({
       timestamp: new Date(),
-      level: 'WARN',
+      level: 'ERROR',
       function: 'convertKamokuCode',
       sourceSheet: CONFIG.SHEETS.SOURCE_DATA,
-      denpyoNo: '',
+      denpyoNo: denpyoNo || '',
       message: errorMsg,
       stack: ''
     });
 
-    Logger.log(`警告: ${errorMsg}`);
-    return srcCodeStr; // マッピングがない場合はPCAコードをそのまま返す（3桁0埋め）
+    Logger.log(`エラー: ${errorMsg}${denpyoNo ? ` (伝票番号: ${denpyoNo})` : ''}`);
+    return ''; // 空白を返す（勝手にマッピングしない）
   }
 
   // 3桁で出力（必要に応じて0埋め）
@@ -99,26 +100,30 @@ function convertKamokuCode(
 /**
  * 税区分変換: PCA公益 → ICS db形式
  */
-function convertTaxCode(pcaCode: string | number | null | undefined, taxMapping: TaxMapping): string {
-  if (!pcaCode) return ''; // デフォルトは空欄
+function convertTaxCode(
+  pcaCode: string | number | null | undefined,
+  taxMapping: TaxMapping,
+  denpyoNo?: string | number
+): string {
+  if (!pcaCode) return ''; // 値がない場合は空白
 
   const icsCode = taxMapping[String(pcaCode)];
 
   if (!icsCode) {
-    const errorMsg = `税区分 ${pcaCode} のマッピングが見つかりません。空欄を使用します`;
+    const errorMsg = `税区分 ${pcaCode} のマッピングが見つかりません`;
 
     ERROR_LOGS.push({
       timestamp: new Date(),
-      level: 'WARN',
+      level: 'ERROR',
       function: 'convertTaxCode',
       sourceSheet: CONFIG.SHEETS.SOURCE_DATA,
-      denpyoNo: '',
+      denpyoNo: denpyoNo || '',
       message: errorMsg,
       stack: ''
     });
 
-    Logger.log(`警告: ${errorMsg}`);
-    return '';
+    Logger.log(`エラー: ${errorMsg}${denpyoNo ? ` (伝票番号: ${denpyoNo})` : ''}`);
+    return ''; // 空白を返す（勝手にマッピングしない）
   }
 
   return icsCode;
@@ -130,19 +135,20 @@ function convertTaxCode(pcaCode: string | number | null | undefined, taxMapping:
 function selectBestTaxCode(
   karikataTaxCode: string | number | null | undefined,
   kashikataTaxCode: string | number | null | undefined,
-  taxMapping: TaxMapping
+  taxMapping: TaxMapping,
+  denpyoNo?: string | number
 ): string {
   // 両方とも値がない場合
   if (!karikataTaxCode && !kashikataTaxCode) {
-    return '';
+    return convertTaxCode('00', taxMapping, denpyoNo);
   }
 
   // 片方だけの場合
   if (!karikataTaxCode) {
-    return convertTaxCode(kashikataTaxCode, taxMapping);
+    return convertTaxCode(kashikataTaxCode, taxMapping, denpyoNo);
   }
   if (!kashikataTaxCode) {
-    return convertTaxCode(karikataTaxCode, taxMapping);
+    return convertTaxCode(karikataTaxCode, taxMapping, denpyoNo);
   }
 
   // 両方ある場合
@@ -151,14 +157,14 @@ function selectBestTaxCode(
 
   // 借方が00以外 → 借方を採用
   if (karikataStr !== '00') {
-    return convertTaxCode(karikataStr, taxMapping);
+    return convertTaxCode(karikataStr, taxMapping, denpyoNo);
   }
 
   // 借方が00、貸方が00以外 → 貸方を採用
   if (kashikataStr !== '00') {
-    return convertTaxCode(kashikataStr, taxMapping);
+    return convertTaxCode(kashikataStr, taxMapping, denpyoNo);
   }
 
   // 両方00 → 00を採用
-  return convertTaxCode('00', taxMapping);
+  return convertTaxCode('00', taxMapping, denpyoNo);
 }
