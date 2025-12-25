@@ -266,8 +266,8 @@ function convertJournal(
         denpyoNo
       );
     } else {
-      // 335/191以外の場合は、311に変換
-      taxCode = convertTaxCode('311', taxMapping, denpyoNo);
+      // 335/191以外の場合は、変換後のコードを311にする
+      taxCode = '311';
     }
   } else {
     // 通常の税区分変換（00以外を優先）
