@@ -249,9 +249,13 @@ function convertJournal(
   const karikataName = kamokuMapping.nameMap[String(karikataCode)] || journal.karikataItem.name || '';
   const kashikataName = kamokuMapping.nameMap[String(kashikataCode)] || journal.kashikataItem.name || '';
 
-  // 税区分変換（335/191科目が含まれる複合仕訳の場合、別の行の税区分を311にする）
+  // 税区分変換
   let taxCode: string;
-  if (journal.has335or191InGroup) {
+
+  // 借方消費税額または貸方消費税額が0より大きい場合は315にする
+  if (journal.karikataItem.taxAmount > 0 || journal.kashikataItem.taxAmount > 0) {
+    taxCode = '315';
+  } else if (journal.has335or191InGroup) {
     // 複合仕訳内に335/191科目が含まれる場合
     const karikataKamokuStr = String(journal.karikataItem.kamoku);
     const kashikataKamokuStr = String(journal.kashikataItem.kamoku);
