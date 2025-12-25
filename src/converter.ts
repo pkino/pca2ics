@@ -255,32 +255,40 @@ function convertJournal(
   // 借方消費税額または貸方消費税額が0より大きい場合は315にする
   if (journal.karikataItem.taxAmount > 0 || journal.kashikataItem.taxAmount > 0) {
     taxCode = '315';
-  } else if (journal.has335or191InGroup) {
-    // 複合仕訳内に335/191科目が含まれる場合
+  } else {
+    // 税区分コードがQDかつ科目コードが191または335の場合は317にする
+    const isQDTaxCode = String(journal.karikataItem.taxCode) === 'QD' ||
+                        String(journal.kashikataItem.taxCode) === 'QD';
     const karikataKamokuStr = String(journal.karikataItem.kamoku);
     const kashikataKamokuStr = String(journal.kashikataItem.kamoku);
+    const is335or191Kamoku = karikataKamokuStr === '335' || karikataKamokuStr === '191' ||
+                              kashikataKamokuStr === '335' || kashikataKamokuStr === '191';
 
-    // 現在の仕訳が335/191科目の場合は、通常通りの変換
-    if (karikataKamokuStr === '335' || karikataKamokuStr === '191' ||
-        kashikataKamokuStr === '335' || kashikataKamokuStr === '191') {
+    if (isQDTaxCode && is335or191Kamoku) {
+      taxCode = '317';
+    } else if (journal.has335or191InGroup) {
+      // 複合仕訳内に335/191科目が含まれる場合
+      // 現在の仕訳が335/191科目の場合は、通常通りの変換
+      if (is335or191Kamoku) {
+        taxCode = selectBestTaxCode(
+          journal.karikataItem.taxCode,
+          journal.kashikataItem.taxCode,
+          taxMapping,
+          denpyoNo
+        );
+      } else {
+        // 335/191科目以外の場合は、変換後の税区分コードを311にする
+        taxCode = '311';
+      }
+    } else {
+      // 通常の税区分変換（00以外を優先）
       taxCode = selectBestTaxCode(
         journal.karikataItem.taxCode,
         journal.kashikataItem.taxCode,
         taxMapping,
         denpyoNo
       );
-    } else {
-      // 335/191科目以外の場合は、変換後の税区分コードを311にする
-      taxCode = '311';
     }
-  } else {
-    // 通常の税区分変換（00以外を優先）
-    taxCode = selectBestTaxCode(
-      journal.karikataItem.taxCode,
-      journal.kashikataItem.taxCode,
-      taxMapping,
-      denpyoNo
-    );
   }
 
   // 税額（借方消費税額を使用）
