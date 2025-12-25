@@ -119,7 +119,7 @@ function simplifyCompoundJournal(rows: unknown[][]): SimpleJournal[] {
     throw new Error(errorMsg);
   }
 
-  // 複合仕訳内に335または191の税区分コードが含まれているかチェック
+  // 複合仕訳内に335または191の科目コードが含まれているかチェック
   const has335or191 = checkFor335or191(karikatePending, kashikatePending);
 
   // 金額分割処理
@@ -133,15 +133,15 @@ function simplifyCompoundJournal(rows: unknown[][]): SimpleJournal[] {
 }
 
 /**
- * 複合仕訳内に335または191の税区分コードが含まれているかチェック
+ * 複合仕訳内に335または191の科目コードが含まれているかチェック
  */
 function checkFor335or191(karikataItems: JournalItem[], kashikataItems: JournalItem[]): boolean {
   // 借方と貸方の全項目をチェック
   const allItems = [...karikataItems, ...kashikataItems];
 
   for (const item of allItems) {
-    const taxCodeStr = String(item.taxCode);
-    if (taxCodeStr === '335' || taxCodeStr === '191') {
+    const kamokuStr = String(item.kamoku);
+    if (kamokuStr === '335' || kamokuStr === '191') {
       return true;
     }
   }
@@ -249,16 +249,16 @@ function convertJournal(
   const karikataName = kamokuMapping.nameMap[String(karikataCode)] || journal.karikataItem.name || '';
   const kashikataName = kamokuMapping.nameMap[String(kashikataCode)] || journal.kashikataItem.name || '';
 
-  // 税区分変換（335/191が含まれる複合仕訳の場合、別の行の税区分を311にする）
+  // 税区分変換（335/191科目が含まれる複合仕訳の場合、別の行の税区分を311にする）
   let taxCode: string;
   if (journal.has335or191InGroup) {
-    // 複合仕訳内に335/191が含まれる場合
-    const karikataTaxStr = String(journal.karikataItem.taxCode);
-    const kashikataTaxStr = String(journal.kashikataItem.taxCode);
+    // 複合仕訳内に335/191科目が含まれる場合
+    const karikataKamokuStr = String(journal.karikataItem.kamoku);
+    const kashikataKamokuStr = String(journal.kashikataItem.kamoku);
 
-    // 現在の仕訳が335/191の場合は、通常通りの変換
-    if (karikataTaxStr === '335' || karikataTaxStr === '191' ||
-        kashikataTaxStr === '335' || kashikataTaxStr === '191') {
+    // 現在の仕訳が335/191科目の場合は、通常通りの変換
+    if (karikataKamokuStr === '335' || karikataKamokuStr === '191' ||
+        kashikataKamokuStr === '335' || kashikataKamokuStr === '191') {
       taxCode = selectBestTaxCode(
         journal.karikataItem.taxCode,
         journal.kashikataItem.taxCode,
@@ -266,7 +266,7 @@ function convertJournal(
         denpyoNo
       );
     } else {
-      // 335/191以外の場合は、変換後のコードを311にする
+      // 335/191科目以外の場合は、変換後の税区分コードを311にする
       taxCode = '311';
     }
   } else {

@@ -88,7 +88,7 @@ interface SimpleJournal {
   karikataItem: JournalItem;
   kashikataItem: JournalItem;
   amount: number;
-  has335or191InGroup: boolean; // 複合仕訳内に335/191を含むか
+  has335or191InGroup: boolean; // 複合仕訳内に335/191科目を含むか
 }
 
 /** 伝票グループの型 */
