@@ -119,10 +119,13 @@ function simplifyCompoundJournal(rows: unknown[][]): SimpleJournal[] {
     throw new Error(errorMsg);
   }
 
+  // 複合仕訳内に335または191の科目コードが含まれているかチェック
+  const has335or191 = checkFor335or191(karikatePending, kashikatePending);
+
   // 金額分割処理
   const splitJournals: SimpleJournal[] = [];
   for (const journal of simplified) {
-    const split = splitJournalByAmount(journal);
+    const split = splitJournalByAmount(journal, has335or191);
     splitJournals.push(...split);
   }
 
@@ -130,10 +133,27 @@ function simplifyCompoundJournal(rows: unknown[][]): SimpleJournal[] {
 }
 
 /**
+ * 複合仕訳内に335または191の科目コードが含まれているかチェック
+ */
+function checkFor335or191(karikataItems: JournalItem[], kashikataItems: JournalItem[]): boolean {
+  // 借方と貸方の全項目をチェック
+  const allItems = [...karikataItems, ...kashikataItems];
+
+  for (const item of allItems) {
+    const kamokuStr = String(item.kamoku);
+    if (kamokuStr === '335' || kamokuStr === '191') {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * 金額分割処理（方式D）
  * 借方・貸方の金額が一致するように分割
  */
-function splitJournalByAmount(journal: CompoundJournal): SimpleJournal[] {
+function splitJournalByAmount(journal: CompoundJournal, has335or191: boolean): SimpleJournal[] {
   const result: SimpleJournal[] = [];
 
   const karikataItems = [...journal.karikataItems];
@@ -152,7 +172,8 @@ function splitJournalByAmount(journal: CompoundJournal): SimpleJournal[] {
         baseRow: journal.baseRow,
         karikataItem: karikataItem,
         kashikataItem: kashikataItem,
-        amount: karikataAmount
+        amount: karikataAmount,
+        has335or191InGroup: has335or191
       });
 
       karikataItems.shift();
@@ -167,7 +188,8 @@ function splitJournalByAmount(journal: CompoundJournal): SimpleJournal[] {
           ...kashikataItem,
           amount: karikataAmount
         },
-        amount: karikataAmount
+        amount: karikataAmount,
+        has335or191InGroup: has335or191
       });
 
       karikataItems.shift();
@@ -187,7 +209,8 @@ function splitJournalByAmount(journal: CompoundJournal): SimpleJournal[] {
           amount: kashikataAmount
         },
         kashikataItem: kashikataItem,
-        amount: kashikataAmount
+        amount: kashikataAmount,
+        has335or191InGroup: has335or191
       });
 
       kashikataItems.shift();
@@ -226,13 +249,35 @@ function convertJournal(
   const karikataName = kamokuMapping.nameMap[String(karikataCode)] || journal.karikataItem.name || '';
   const kashikataName = kamokuMapping.nameMap[String(kashikataCode)] || journal.kashikataItem.name || '';
 
-  // 税区分変換（00以外を優先）
-  const taxCode = selectBestTaxCode(
-    journal.karikataItem.taxCode,
-    journal.kashikataItem.taxCode,
-    taxMapping,
-    denpyoNo
-  );
+  // 税区分変換（335/191科目が含まれる複合仕訳の場合、別の行の税区分を311にする）
+  let taxCode: string;
+  if (journal.has335or191InGroup) {
+    // 複合仕訳内に335/191科目が含まれる場合
+    const karikataKamokuStr = String(journal.karikataItem.kamoku);
+    const kashikataKamokuStr = String(journal.kashikataItem.kamoku);
+
+    // 現在の仕訳が335/191科目の場合は、通常通りの変換
+    if (karikataKamokuStr === '335' || karikataKamokuStr === '191' ||
+        kashikataKamokuStr === '335' || kashikataKamokuStr === '191') {
+      taxCode = selectBestTaxCode(
+        journal.karikataItem.taxCode,
+        journal.kashikataItem.taxCode,
+        taxMapping,
+        denpyoNo
+      );
+    } else {
+      // 335/191科目以外の場合は、変換後の税区分コードを311にする
+      taxCode = '311';
+    }
+  } else {
+    // 通常の税区分変換（00以外を優先）
+    taxCode = selectBestTaxCode(
+      journal.karikataItem.taxCode,
+      journal.kashikataItem.taxCode,
+      taxMapping,
+      denpyoNo
+    );
+  }
 
   // 税額（借方消費税額を使用）
   const taxAmount = journal.karikataItem.taxAmount || 0;
