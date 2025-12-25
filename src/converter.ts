@@ -286,6 +286,11 @@ function convertJournal(
   // 税額（借方消費税額を使用）
   const taxAmount = journal.karikataItem.taxAmount || 0;
 
+  // 免税事業者等フラグ（変換前の税区分コードがQDの場合は1）
+  const isQDTaxCode = String(journal.karikataItem.taxCode) === 'QD' ||
+                      String(journal.kashikataItem.taxCode) === 'QD';
+  const menzeijigyo = isQDTaxCode ? '1' : '';
+
   // ICS形式の行を作成
   return [
     date,                                    // 日付
@@ -325,7 +330,7 @@ function convertJournal(
     '',                                      // 手形期日（空白）
     '',                                      // 付箋番号（空白）
     '',                                      // 付箋コメント（空白）
-    '',                                      // 免税事業者等（空白）
+    menzeijigyo,                             // 免税事業者等（QDの場合は1）
     ''                                       // インボイス登録番号（空白）
   ];
 }
