@@ -74,7 +74,15 @@ function outputData(
     outputSheet = ss.insertSheet(CONFIG.SHEETS.OUTPUT);
   }
 
-  // ヘッダー行を作成
+  // 固定ヘッダー行（1-4行目）
+  const fixedHeaders: (string | number)[][] = [
+    ['法人'],
+    ['db仕訳日記帳'],
+    ['6', '株式会社　木重漆器店'],
+    ['自 7年 4月 1日', '至 8年 3月31日', '月分']
+  ];
+
+  // 列ヘッダー行（5行目）
   const headers: string[] = [
     '日付', '決修', '伝票番号',
     '借方部門コード', '借方事管区分', '借方工事コード', '借方コード', '借方名称',
@@ -87,15 +95,15 @@ function outputData(
     '免税事業者等', 'インボイス登録番号'
   ];
 
-  // ヘッダーとデータを出力
-  const outputData: (string | number)[][] = [headers, ...data];
-  outputSheet.getRange(1, 1, outputData.length, headers.length).setValues(outputData);
+  // 固定ヘッダー + 列ヘッダー + データを出力
+  const outputData: (string | number)[][] = [...fixedHeaders, headers, ...data];
+  outputSheet.getRange(1, 1, outputData.length, Math.max(...outputData.map(row => row.length))).setValues(outputData);
 
-  // ヘッダー行を固定
-  outputSheet.setFrozenRows(1);
+  // 列ヘッダー行を固定（5行目）
+  outputSheet.setFrozenRows(5);
 
-  // ヘッダー行を太字に
-  outputSheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+  // 列ヘッダー行を太字に（5行目）
+  outputSheet.getRange(5, 1, 1, headers.length).setFontWeight('bold');
 
   Logger.log(`${data.length}行を出力しました`);
 }
