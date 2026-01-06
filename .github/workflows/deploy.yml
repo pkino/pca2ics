@@ -28,11 +28,15 @@ jobs:
 
       - name: Setup clasp credentials
         run: |
-          echo '${{ secrets.CLASP_TOKEN }}' > ~/.clasprc.json
+          cat << 'EOF' > ~/.clasprc.json
+          ${{ secrets.CLASP_TOKEN }}
+          EOF
 
       - name: Update script ID
         run: |
-          echo '{"scriptId":"${{ secrets.SCRIPT_ID }}","rootDir":"./dist"}' > .clasp.json
+          cat << EOF > .clasp.json
+          {"scriptId":"${{ secrets.SCRIPT_ID }}","rootDir":"./dist"}
+          EOF
 
       - name: Push to Google Apps Script
         run: npx clasp push --force
