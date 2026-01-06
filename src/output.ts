@@ -128,7 +128,10 @@ function getCSVContent(): string {
   // CSV形式に変換（ダブルクォートなし、Windows CRLF改行）
   const csvContent = data.map(row =>
     row.map(cell => String(cell)).join(',')
-  ).join('\r\n');
+  ).join('\r\n')
+    .replace(/\u301C/g, '\uFF5E')  // 〜 → ～（これでCP932寄りになりやすい）
+    .replace(/\u2212/g, '\uFF0D'); // −(マイナス) → －(全角ハイフン) も地雷常連
+
 
   return csvContent;
 }
