@@ -117,12 +117,24 @@ function exportToCSV(): void {
   }
 
   // シートのすべてのデータを取得
-  const data = sheet.getDataRange().getValues();
+  const allData = sheet.getDataRange().getValues();
+
+  if (allData.length === 0) {
+    SpreadsheetApp.getUi().alert(
+      'エラー',
+      '出力シートにデータがありません。先に変換を実行してください。',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    return;
+  }
+
+  // ヘッダー行を除外して2行目以降のデータのみを取得
+  const data = allData.slice(1);
 
   if (data.length === 0) {
     SpreadsheetApp.getUi().alert(
       'エラー',
-      '出力シートにデータがありません。先に変換を実行してください。',
+      '出力シートにデータ行がありません。',
       SpreadsheetApp.getUi().ButtonSet.OK
     );
     return;
@@ -141,14 +153,22 @@ function exportToCSV(): void {
   const fileUrl = file.getUrl();
   const fileName = file.getName();
 
-  // 成功メッセージを表示
-  SpreadsheetApp.getUi().alert(
+  // ダウンロードリンクを表示
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.alert(
     'CSV エクスポート完了',
     `CSVファイル（ANSI/Shift_JIS形式）をGoogle Driveに保存しました。\n\n` +
     `ファイル名: ${fileName}\n\n` +
-    `以下のリンクからダウンロードできます:\n${fileUrl}`,
-    SpreadsheetApp.getUi().ButtonSet.OK
+    `以下のリンクからダウンロードしてください:\n${fileUrl}\n\n` +
+    `ダウンロード完了後、OKを押すとファイルが削除されます。`,
+    ui.ButtonSet.OK_CANCEL
   );
 
-  Logger.log('CSVファイルをShift_JISフォーマットでエクスポートしました: ' + fileUrl);
+  // ダウンロード完了後、ファイルを削除
+  if (response === ui.Button.OK) {
+    file.setTrashed(true);
+    Logger.log('CSVファイルを削除しました: ' + fileName);
+  } else {
+    Logger.log('CSVファイルは保持されます: ' + fileUrl);
+  }
 }
