@@ -136,36 +136,19 @@ function exportToCSV(): void {
   // Shift_JIS（ANSI）エンコーディングでBlobを作成
   const blob = Utilities.newBlob(csvContent, 'text/csv; charset=Shift_JIS', 'ICS変換結果.csv');
 
-  // HTMLダイアログを作成してダウンロード
-  const downloadUrl = 'data:text/csv;charset=Shift_JIS;base64,' + Utilities.base64Encode(blob.getBytes());
-  const html = `
-    <html>
-      <head>
-        <base target="_top">
-        <script>
-          function download() {
-            const a = document.createElement('a');
-            a.href = '${downloadUrl}';
-            a.download = 'ICS変換結果.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            google.script.host.close();
-          }
-        </script>
-      </head>
-      <body onload="download()">
-        <p>ダウンロードが開始されます...</p>
-        <p>自動的に閉じない場合は、このウィンドウを閉じてください。</p>
-      </body>
-    </html>
-  `;
+  // Google Driveに保存
+  const file = DriveApp.createFile(blob);
+  const fileUrl = file.getUrl();
+  const fileName = file.getName();
 
-  const htmlOutput = HtmlService.createHtmlOutput(html)
-    .setWidth(400)
-    .setHeight(200);
+  // 成功メッセージを表示
+  SpreadsheetApp.getUi().alert(
+    'CSV エクスポート完了',
+    `CSVファイル（ANSI/Shift_JIS形式）をGoogle Driveに保存しました。\n\n` +
+    `ファイル名: ${fileName}\n\n` +
+    `以下のリンクからダウンロードできます:\n${fileUrl}`,
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
 
-  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'CSV エクスポート (ANSI/Shift_JIS)');
-
-  Logger.log('CSVファイルをShift_JISフォーマットでエクスポートしました');
+  Logger.log('CSVファイルをShift_JISフォーマットでエクスポートしました: ' + fileUrl);
 }
