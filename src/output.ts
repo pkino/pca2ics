@@ -241,8 +241,7 @@ function exportToCSV(): void {
   `;
 
   const htmlOutput = HtmlService.createHtmlOutput(html)
-    .setWidth(500)
-    .setHeight(300);
+    .setTitle('CSV エクスポート');
 
-  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'CSV エクスポート');
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
