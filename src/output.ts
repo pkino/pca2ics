@@ -196,14 +196,10 @@ function exportToCSV(): void {
             google.script.run
               .withSuccessHandler(function(csvContent) {
                 try {
-                  // UTF-8文字列をShift_JISバイト配列に変換
-                  // for...ofでサロゲートペア（絵文字等）にも対応
-                  const unicodeArray = [];
-                  for (const ch of csvContent) {
-                    const codePoint = ch.codePointAt(0);
-                    unicodeArray.push(codePoint);
-                  }
+                  // encoding-japaneseのstringToCodeメソッドを使用
+                  const unicodeArray = Encoding.stringToCode(csvContent);
 
+                  // UnicodeからShift_JISに変換
                   const sjisArray = Encoding.convert(unicodeArray, {
                     to: 'SJIS',
                     from: 'UNICODE'
