@@ -138,9 +138,9 @@ function getCSVContent(): string {
   // CSV形式に変換（ダブルクォートなし、Windows CRLF改行）
   const csvContent = data.map(row =>
     row.map(cell => {
-      // 日付は yyyy/MM/dd 形式に整形
+      // 日付は yyyy/M/d 形式に整形（1桁の月日は先頭0なし）
       if (cell instanceof Date) {
-        return Utilities.formatDate(cell, Session.getScriptTimeZone(), 'yyyy/MM/dd');
+        return Utilities.formatDate(cell, Session.getScriptTimeZone(), 'yyyy/M/d');
       }
 
       let val = String(cell);
