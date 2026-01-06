@@ -109,3 +109,164 @@ function outputData(
 
   Logger.log(`${data.length}行を出力しました`);
 }
+
+/**
+ * CSVコンテンツを取得（サーバー側関数）
+ */
+function getCSVContent(): string {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(CONFIG.SHEETS.OUTPUT);
+
+  if (!sheet) {
+    throw new Error('出力シートが見つかりません。先に変換を実行してください。');
+  }
+
+  // シートのすべてのデータを取得
+  const allData = sheet.getDataRange().getValues();
+
+  if (allData.length === 0) {
+    throw new Error('出力シートにデータがありません。先に変換を実行してください。');
+  }
+
+  // ヘッダー行を除外して2行目以降のデータのみを取得
+  const data = allData.slice(1);
+
+  if (data.length === 0) {
+    throw new Error('出力シートにデータ行がありません。');
+  }
+
+  // CSV形式に変換（ダブルクォートなし、Windows CRLF改行）
+  const csvContent = data.map(row =>
+    row.map(cell => {
+      // 日付は yyyy/MM/dd 形式に整形
+      if (cell instanceof Date) {
+        return Utilities.formatDate(cell, Session.getScriptTimeZone(), 'yyyy/MM/dd');
+      }
+
+      let val = String(cell);
+
+      // データ内のカンマ(,)は 全角カンマ(，) に置換して列ズレ防止
+      val = val.replace(/,/g, '，');
+      // データ内の改行は スペース に置換して行ズレ防止
+      val = val.replace(/[\r\n]+/g, ' ');
+
+      return val;
+    }).join(',')
+  ).join('\r\n')
+    .replace(/\u301C/g, '\uFF5E')  // 〜 → ～（これでCP932寄りになりやすい）
+    .replace(/\u2212/g, '\uFF0D'); // −(マイナス) → －(全角ハイフン) も地雷常連
+
+
+  return csvContent;
+}
+
+/**
+ * CSVデータをANSI（Shift_JIS）フォーマットでダウンロード
+ */
+function exportToCSV(): void {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <base target="_top">
+        <script src="https://cdn.jsdelivr.net/npm/encoding-japanese@2.0.0/encoding.min.js"></script>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+          }
+          button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+          }
+          button:hover {
+            background-color: #45a049;
+          }
+          button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+          }
+          #status {
+            margin-top: 20px;
+            font-size: 14px;
+          }
+          .error {
+            color: red;
+          }
+          .success {
+            color: green;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>CSV エクスポート (ANSI/Shift_JIS形式)</h2>
+        <p>ダウンロードボタンをクリックしてください</p>
+        <button id="downloadBtn" onclick="downloadCSV()">ダウンロード</button>
+        <div id="status"></div>
+
+        <script>
+          function downloadCSV() {
+            const btn = document.getElementById('downloadBtn');
+            const status = document.getElementById('status');
+
+            btn.disabled = true;
+            status.innerHTML = '処理中...';
+
+            google.script.run
+              .withSuccessHandler(function(csvContent) {
+                try {
+                  // encoding-japaneseのstringToCodeメソッドを使用
+                  const unicodeArray = Encoding.stringToCode(csvContent);
+
+                  // UnicodeからShift_JISに変換
+                  const sjisArray = Encoding.convert(unicodeArray, {
+                    to: 'SJIS',
+                    from: 'UNICODE'
+                  });
+
+                  // Uint8Arrayに変換
+                  const uint8Array = new Uint8Array(sjisArray);
+
+                  // Blobを作成（charset明示）
+                  const blob = new Blob([uint8Array], { type: 'text/csv;charset=shift_jis' });
+
+                  // ダウンロード
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'ICS変換結果.csv';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+
+                  status.innerHTML = '<span class="success">ダウンロード完了！このウィンドウを閉じてください。</span>';
+                } catch (error) {
+                  status.innerHTML = '<span class="error">エラー: ' + error.message + '</span>';
+                  btn.disabled = false;
+                }
+              })
+              .withFailureHandler(function(error) {
+                status.innerHTML = '<span class="error">エラー: ' + error.message + '</span>';
+                btn.disabled = false;
+              })
+              .getCSVContent();
+          }
+        </script>
+      </body>
+    </html>
+  `;
+
+  const htmlOutput = HtmlService.createHtmlOutput(html)
+    .setTitle('CSV エクスポート');
+
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
+}
