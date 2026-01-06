@@ -128,17 +128,9 @@ function exportToCSV(): void {
     return;
   }
 
-  // CSV形式に変換
+  // CSV形式に変換（ダブルクォートなし）
   const csvContent = data.map(row =>
-    row.map(cell => {
-      // セルの値を文字列に変換
-      const value = String(cell);
-      // カンマ、改行、ダブルクォートを含む場合はダブルクォートで囲む
-      if (value.includes(',') || value.includes('\n') || value.includes('"')) {
-        return '"' + value.replace(/"/g, '""') + '"';
-      }
-      return value;
-    }).join(',')
+    row.map(cell => String(cell)).join(',')
   ).join('\n');
 
   // Shift_JIS（ANSI）エンコーディングでBlobを作成
