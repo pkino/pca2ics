@@ -197,9 +197,11 @@ function exportToCSV(): void {
               .withSuccessHandler(function(csvContent) {
                 try {
                   // UTF-8文字列をShift_JISバイト配列に変換
+                  // for...ofでサロゲートペア（絵文字等）にも対応
                   const unicodeArray = [];
-                  for (let i = 0; i < csvContent.length; i++) {
-                    unicodeArray.push(csvContent.charCodeAt(i));
+                  for (const ch of csvContent) {
+                    const codePoint = ch.codePointAt(0);
+                    unicodeArray.push(codePoint);
                   }
 
                   const sjisArray = Encoding.convert(unicodeArray, {
@@ -210,8 +212,8 @@ function exportToCSV(): void {
                   // Uint8Arrayに変換
                   const uint8Array = new Uint8Array(sjisArray);
 
-                  // Blobを作成
-                  const blob = new Blob([uint8Array], { type: 'text/csv' });
+                  // Blobを作成（charset明示）
+                  const blob = new Blob([uint8Array], { type: 'text/csv;charset=shift_jis' });
 
                   // ダウンロード
                   const url = URL.createObjectURL(blob);
