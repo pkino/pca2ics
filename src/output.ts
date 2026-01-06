@@ -125,10 +125,10 @@ function getCSVContent(): string {
     throw new Error('出力シートにデータ行がありません。');
   }
 
-  // CSV形式に変換（ダブルクォートなし）
+  // CSV形式に変換（ダブルクォートなし、Windows CRLF改行）
   const csvContent = data.map(row =>
     row.map(cell => String(cell)).join(',')
-  ).join('\n');
+  ).join('\r\n');
 
   return csvContent;
 }
