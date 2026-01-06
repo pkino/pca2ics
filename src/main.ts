@@ -308,6 +308,7 @@ function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('PCA→ICS変換')
     .addItem('変換実行', 'convertPCAtoICS')
+    .addItem('CSVエクスポート (ANSI形式)', 'exportToCSV')
     .addSeparator()
     .addItem('税区分マッピングシートを作成', 'createTaxMappingSheetManually')
     .addToUi();

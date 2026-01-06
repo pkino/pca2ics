@@ -99,3 +99,81 @@ function outputData(
 
   Logger.log(`${data.length}行を出力しました`);
 }
+
+/**
+ * CSVデータをANSI（Shift_JIS）フォーマットでダウンロード
+ */
+function exportToCSV(): void {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(CONFIG.SHEETS.OUTPUT);
+
+  if (!sheet) {
+    SpreadsheetApp.getUi().alert(
+      'エラー',
+      '出力シートが見つかりません。先に変換を実行してください。',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    return;
+  }
+
+  // シートのすべてのデータを取得
+  const data = sheet.getDataRange().getValues();
+
+  if (data.length === 0) {
+    SpreadsheetApp.getUi().alert(
+      'エラー',
+      '出力シートにデータがありません。先に変換を実行してください。',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+    return;
+  }
+
+  // CSV形式に変換
+  const csvContent = data.map(row =>
+    row.map(cell => {
+      // セルの値を文字列に変換
+      const value = String(cell);
+      // カンマ、改行、ダブルクォートを含む場合はダブルクォートで囲む
+      if (value.includes(',') || value.includes('\n') || value.includes('"')) {
+        return '"' + value.replace(/"/g, '""') + '"';
+      }
+      return value;
+    }).join(',')
+  ).join('\n');
+
+  // Shift_JIS（ANSI）エンコーディングでBlobを作成
+  const blob = Utilities.newBlob(csvContent, 'text/csv; charset=Shift_JIS', 'ICS変換結果.csv');
+
+  // HTMLダイアログを作成してダウンロード
+  const downloadUrl = 'data:text/csv;charset=Shift_JIS;base64,' + Utilities.base64Encode(blob.getBytes());
+  const html = `
+    <html>
+      <head>
+        <base target="_top">
+        <script>
+          function download() {
+            const a = document.createElement('a');
+            a.href = '${downloadUrl}';
+            a.download = 'ICS変換結果.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            google.script.host.close();
+          }
+        </script>
+      </head>
+      <body onload="download()">
+        <p>ダウンロードが開始されます...</p>
+        <p>自動的に閉じない場合は、このウィンドウを閉じてください。</p>
+      </body>
+    </html>
+  `;
+
+  const htmlOutput = HtmlService.createHtmlOutput(html)
+    .setWidth(400)
+    .setHeight(200);
+
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'CSV エクスポート (ANSI/Shift_JIS)');
+
+  Logger.log('CSVファイルをShift_JISフォーマットでエクスポートしました');
+}
