@@ -127,7 +127,21 @@ function getCSVContent(): string {
 
   // CSV形式に変換（ダブルクォートなし、Windows CRLF改行）
   const csvContent = data.map(row =>
-    row.map(cell => String(cell)).join(',')
+    row.map(cell => {
+      // 日付は yyyy/MM/dd 形式に整形
+      if (cell instanceof Date) {
+        return Utilities.formatDate(cell, Session.getScriptTimeZone(), 'yyyy/MM/dd');
+      }
+
+      let val = String(cell);
+
+      // データ内のカンマ(,)は 全角カンマ(，) に置換して列ズレ防止
+      val = val.replace(/,/g, '，');
+      // データ内の改行は スペース に置換して行ズレ防止
+      val = val.replace(/[\r\n]+/g, ' ');
+
+      return val;
+    }).join(',')
   ).join('\r\n')
     .replace(/\u301C/g, '\uFF5E')  // 〜 → ～（これでCP932寄りになりやすい）
     .replace(/\u2212/g, '\uFF0D'); // −(マイナス) → －(全角ハイフン) も地雷常連
