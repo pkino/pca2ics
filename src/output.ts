@@ -101,43 +101,28 @@ function outputData(
 }
 
 /**
- * CSVデータをANSI（Shift_JIS）フォーマットでダウンロード
+ * CSVコンテンツを取得（サーバー側関数）
  */
-function exportToCSV(): void {
+function getCSVContent(): string {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(CONFIG.SHEETS.OUTPUT);
 
   if (!sheet) {
-    SpreadsheetApp.getUi().alert(
-      'エラー',
-      '出力シートが見つかりません。先に変換を実行してください。',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    return;
+    throw new Error('出力シートが見つかりません。先に変換を実行してください。');
   }
 
   // シートのすべてのデータを取得
   const allData = sheet.getDataRange().getValues();
 
   if (allData.length === 0) {
-    SpreadsheetApp.getUi().alert(
-      'エラー',
-      '出力シートにデータがありません。先に変換を実行してください。',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    return;
+    throw new Error('出力シートにデータがありません。先に変換を実行してください。');
   }
 
   // ヘッダー行を除外して2行目以降のデータのみを取得
   const data = allData.slice(1);
 
   if (data.length === 0) {
-    SpreadsheetApp.getUi().alert(
-      'エラー',
-      '出力シートにデータ行がありません。',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
-    return;
+    throw new Error('出力シートにデータ行がありません。');
   }
 
   // CSV形式に変換（ダブルクォートなし）
@@ -145,30 +130,119 @@ function exportToCSV(): void {
     row.map(cell => String(cell)).join(',')
   ).join('\n');
 
-  // Shift_JIS（ANSI）エンコーディングでBlobを作成
-  const blob = Utilities.newBlob(csvContent, 'text/csv; charset=Shift_JIS', 'ICS変換結果.csv');
+  return csvContent;
+}
 
-  // Google Driveに保存
-  const file = DriveApp.createFile(blob);
-  const fileUrl = file.getUrl();
-  const fileName = file.getName();
+/**
+ * CSVデータをANSI（Shift_JIS）フォーマットでダウンロード
+ */
+function exportToCSV(): void {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <base target="_top">
+        <script src="https://cdn.jsdelivr.net/npm/encoding-japanese@2.0.0/encoding.min.js"></script>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+          }
+          button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+          }
+          button:hover {
+            background-color: #45a049;
+          }
+          button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+          }
+          #status {
+            margin-top: 20px;
+            font-size: 14px;
+          }
+          .error {
+            color: red;
+          }
+          .success {
+            color: green;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>CSV エクスポート (ANSI/Shift_JIS形式)</h2>
+        <p>ダウンロードボタンをクリックしてください</p>
+        <button id="downloadBtn" onclick="downloadCSV()">ダウンロード</button>
+        <div id="status"></div>
 
-  // ダウンロードリンクを表示
-  const ui = SpreadsheetApp.getUi();
-  const response = ui.alert(
-    'CSV エクスポート完了',
-    `CSVファイル（ANSI/Shift_JIS形式）をGoogle Driveに保存しました。\n\n` +
-    `ファイル名: ${fileName}\n\n` +
-    `以下のリンクからダウンロードしてください:\n${fileUrl}\n\n` +
-    `ダウンロード完了後、OKを押すとファイルが削除されます。`,
-    ui.ButtonSet.OK_CANCEL
-  );
+        <script>
+          function downloadCSV() {
+            const btn = document.getElementById('downloadBtn');
+            const status = document.getElementById('status');
 
-  // ダウンロード完了後、ファイルを削除
-  if (response === ui.Button.OK) {
-    file.setTrashed(true);
-    Logger.log('CSVファイルを削除しました: ' + fileName);
-  } else {
-    Logger.log('CSVファイルは保持されます: ' + fileUrl);
-  }
+            btn.disabled = true;
+            status.innerHTML = '処理中...';
+
+            google.script.run
+              .withSuccessHandler(function(csvContent) {
+                try {
+                  // UTF-8文字列をShift_JISバイト配列に変換
+                  const unicodeArray = [];
+                  for (let i = 0; i < csvContent.length; i++) {
+                    unicodeArray.push(csvContent.charCodeAt(i));
+                  }
+
+                  const sjisArray = Encoding.convert(unicodeArray, {
+                    to: 'SJIS',
+                    from: 'UNICODE'
+                  });
+
+                  // Uint8Arrayに変換
+                  const uint8Array = new Uint8Array(sjisArray);
+
+                  // Blobを作成
+                  const blob = new Blob([uint8Array], { type: 'text/csv' });
+
+                  // ダウンロード
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'ICS変換結果.csv';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+
+                  status.innerHTML = '<span class="success">ダウンロード完了！このウィンドウを閉じてください。</span>';
+                } catch (error) {
+                  status.innerHTML = '<span class="error">エラー: ' + error.message + '</span>';
+                  btn.disabled = false;
+                }
+              })
+              .withFailureHandler(function(error) {
+                status.innerHTML = '<span class="error">エラー: ' + error.message + '</span>';
+                btn.disabled = false;
+              })
+              .getCSVContent();
+          }
+        </script>
+      </body>
+    </html>
+  `;
+
+  const htmlOutput = HtmlService.createHtmlOutput(html)
+    .setWidth(500)
+    .setHeight(300);
+
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'CSV エクスポート');
 }
