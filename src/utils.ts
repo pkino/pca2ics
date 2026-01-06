@@ -45,16 +45,16 @@ function findLatestDateSheet(sheetNames: string[]): string | null {
 }
 
 /**
- * 日付フォーマット変換: 20250930 → 2025.09.30
+ * 日付フォーマット変換: 20250930 → 2025/9/30
  */
 function formatDate(dateValue: string | number | Date): string {
   const dateStr = String(dateValue);
 
   if (dateStr.length === 8) {
     const year = dateStr.substring(0, 4);
-    const month = dateStr.substring(4, 6);
-    const day = dateStr.substring(6, 8);
-    return `${year}.${month}.${day}`;
+    const month = String(parseInt(dateStr.substring(4, 6), 10));
+    const day = String(parseInt(dateStr.substring(6, 8), 10));
+    return `${year}/${month}/${day}`;
   }
 
   return dateStr;
