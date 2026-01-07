@@ -329,19 +329,11 @@ function importCSV(): void {
             const reader = new FileReader();
             reader.onload = function(e) {
               try {
-                status.innerHTML = '文字コード変換中...';
-
                 // ArrayBufferをUint8Arrayに変換
                 const uint8Array = new Uint8Array(e.target.result);
 
-                // Shift_JISからUnicodeに変換
-                const unicodeArray = Encoding.convert(uint8Array, {
-                  to: 'UNICODE',
-                  from: 'SJIS'
-                });
-
                 // Unicodeの数値配列を文字列に変換
-                const csvText = Encoding.codeToString(unicodeArray);
+                const csvText = new TextDecoder('shift_jis').decode(uint8Array);
 
                 status.innerHTML = 'CSV解析中...';
 
