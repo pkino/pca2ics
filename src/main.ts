@@ -308,6 +308,8 @@ function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('PCA→ICS変換')
     .addItem('変換実行', 'convertPCAtoICS')
+    .addSeparator()
+    .addItem('CSVインポート (Shift_JIS)', 'importCSV')
     .addItem('CSVエクスポート (ANSI形式)', 'exportToCSV')
     .addToUi();
 }
