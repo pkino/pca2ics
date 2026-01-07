@@ -427,10 +427,11 @@ function writeCSVToSheet(sheetName: string, data: string[][]): { rowCount: numbe
 
   // データを書き込み
   const range = sheet.getRange(1, 1, rowCount, colCount);
-  range.setValues(normalizedData);
 
   // すべてのセルを文字列として扱う（数字や日付を変換しない、000なども保持）
+  // 値を書き込む前にフォーマットを設定することが重要
   range.setNumberFormat('@');
+  range.setValues(normalizedData);
 
   // 1行目をフリーズ（ヘッダー行として）
   if (rowCount >= 2) {
