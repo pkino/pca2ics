@@ -304,22 +304,20 @@ function convertJournal(
     date,                                    // 日付
     '',                                      // 決修（空白）
     baseRow[COL.DENPYO_NO] as string | number, // 伝票番号
-    journal.karikataItem.dept || '',         // 借方部門コード
-    '',                                      // 借方事管区分（空白）
-    '',                                      // 借方工事コード（空白）
-    karikataCode,                            // 借方コード
+    journal.karikataItem.dept || '',         // 借方部門ｺｰﾄﾞ
+    '',                                      // 借方工事ｺｰﾄﾞ（空白）
+    karikataCode,                            // 借方ｺｰﾄﾞ
     karikataName,                            // 借方名称（科目対応表から）
     journal.karikataItem.hojo || '',         // 借方枝番
     journal.karikataItem.hojoName || '',     // 借方枝番摘要
-    '',                                      // 借方枝番カナ（空白）
-    journal.kashikataItem.dept || '',        // 貸方部門コード
-    '',                                      // 貸方事管区分（空白）
-    '',                                      // 貸方工事コード（空白）
-    kashikataCode,                           // 貸方コード
+    '',                                      // 借方枝番ｶﾅ（空白）
+    journal.kashikataItem.dept || '',        // 貸方部門ｺｰﾄﾞ
+    '',                                      // 貸方工事ｺｰﾄﾞ（空白）
+    kashikataCode,                           // 貸方ｺｰﾄﾞ
     kashikataName,                           // 貸方名称（科目対応表から）
     journal.kashikataItem.hojo || '',        // 貸方枝番
     journal.kashikataItem.hojoName || '',    // 貸方枝番摘要
-    '',                                      // 貸方枝番カナ（空白）
+    '',                                      // 貸方枝番ｶﾅ（空白）
     journal.amount,                          // 金額
     (baseRow[COL.TEKIYO] as string) || '',   // 摘要
     taxCode,                                 // 税区分
@@ -327,13 +325,11 @@ function convertJournal(
     '',                                      // 仕入区分（空白）
     '',                                      // 売上業種区分（空白）
     '',                                      // 仕訳区分（空白）
-    '',                                      // 特定収入区分（空白）
-    '',                                      // ダミー1
-    '',                                      // ダミー2
-    '',                                      // ダミー3
-    '',                                      // 内部取引（空白）
+    '',                                      // ﾀﾞﾐｰ1（空白）
+    '',                                      // ﾀﾞﾐｰ2（空白）
+    '',                                      // ﾀﾞﾐｰ3（空白）
     taxAmount,                               // 税額
-    '',                                      // 証憑番号（空白）
+    '',                                      // ﾀﾞﾐｰ5（空白）
     '',                                      // 手形番号（空白）
     '',                                      // 手形期日（空白）
     '',                                      // 付箋番号（空白）
