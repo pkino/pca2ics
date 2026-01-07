@@ -263,3 +263,4 @@ function exportToCSV(): void {
 
   SpreadsheetApp.getUi().showSidebar(htmlOutput);
 }
+

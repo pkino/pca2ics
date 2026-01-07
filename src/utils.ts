@@ -98,7 +98,7 @@ function convertKamokuCode(
 }
 
 /**
- * 税区分変換: PCA公益 → ICS db形式
+ * 税区分変換: PCA → ICS db形式
  */
 function convertTaxCode(
   pcaCode: string | number | null | undefined,

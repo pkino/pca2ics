@@ -1,10 +1,10 @@
 /**
- * PCA公益法人会計V.12 → ICS財務処理db (db仕訳形式) 変換スクリプト
+ * PCA商魂商管 → ICS財務処理db (db仕訳形式) 変換スクリプト
  *
  * 機能:
  * - 202509.csv形式のデータをICS財務処理db形式に変換
  * - 科目コード変換 (PCAコード → ICSコード)
- * - 税区分変換 (PCA公益 → ICS db形式)
+ * - 税区分変換 (PCA → ICS db形式)
  * - 複合仕訳の単純仕訳への分解
  * - 日付フォーマット変換
  */
@@ -116,7 +116,7 @@ function convertPCAtoICS(): void {
 
     CONFIG.SHEETS.SOURCE_DATA = sourceSheetName;
 
-    Logger.log('=== PCA → ICS 変換開始 ===');
+    Logger.log('=== PCA商魂商管 → ICS 変換開始 ===');
     Logger.log(`元データシート: ${sourceSheetName}`);
 
     // 1. データ読み込み
@@ -218,7 +218,7 @@ function convertSpecificSheet(sheetName: string): void {
 
     CONFIG.SHEETS.SOURCE_DATA = sheetName;
 
-    Logger.log('=== PCA → ICS 変換開始 ===');
+    Logger.log('=== PCA商魂商管 → ICS 変換開始 ===');
     Logger.log(`元データシート: ${sheetName}`);
 
     // 1. データ読み込み
@@ -308,6 +308,8 @@ function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('PCA→ICS変換')
     .addItem('変換実行', 'convertPCAtoICS')
+    .addSeparator()
+    .addItem('CSVインポート (Shift_JIS)', 'importCSV')
     .addItem('CSVエクスポート (ANSI形式)', 'exportToCSV')
     .addToUi();
 }
