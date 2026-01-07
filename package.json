@@ -1,7 +1,7 @@
 {
   "name": "pca2ics",
   "version": "1.0.0",
-  "description": "PCA会計 → ICS財務処理db 変換スクリプト",
+  "description": "PCA商魂商管 → ICS財務処理db 変換スクリプト",
   "scripts": {
     "build": "tsc && cp src/appsscript.json dist/",
     "watch": "tsc -w",

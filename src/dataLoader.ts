@@ -229,7 +229,7 @@ function importCSV(): void {
       </head>
       <body>
         <h2>CSV インポート (Shift_JIS → UTF-8)</h2>
-        <p class="info">PCA会計からエクスポートしたCSVファイルを選択してください</p>
+        <p class="info">PCA商魂商管からエクスポートしたCSVファイルを選択してください</p>
 
         <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
           <p id="uploadText">📂 クリックしてファイルを選択<br>またはドラッグ&ドロップ</p>
