@@ -335,6 +335,11 @@ function importCSV(): void {
                 // Unicodeの数値配列を文字列に変換
                 const csvText = new TextDecoder('shift_jis').decode(uint8Array);
 
+                // 文字化けチェック（?が含まれている場合は変換に失敗している可能性が高い）
+                if (csvText.includes('?') || csvText.includes('\ufffd')) {
+                  throw new Error('文字コード変換に失敗しました。ファイルがShift_JIS形式でない可能性があります。');
+                }
+
                 status.innerHTML = 'CSV解析中...';
 
                 // CSVを解析（改行で分割して2次元配列に変換）
@@ -400,8 +405,8 @@ function writeCSVToSheet(sheetName: string, data: string[][]): { rowCount: numbe
   let sheet = ss.getSheetByName(sheetName);
 
   if (sheet) {
-    // 既存シートがある場合は確認（UIから呼ばれるので直接上書き）
-    sheet.clear();
+    // 既存シートがある場合はエラー
+    throw new Error('シート「' + sheetName + '」は既に存在します。別のシート名を指定してください。');
   } else {
     // 新規シート作成
     sheet = ss.insertSheet(sheetName);
@@ -420,7 +425,12 @@ function writeCSVToSheet(sheetName: string, data: string[][]): { rowCount: numbe
     return newRow;
   });
 
-  sheet.getRange(1, 1, rowCount, colCount).setValues(normalizedData);
+  // データを書き込み
+  const range = sheet.getRange(1, 1, rowCount, colCount);
+  range.setValues(normalizedData);
+
+  // すべてのセルを文字列として扱う（数字や日付を変換しない、000なども保持）
+  range.setNumberFormat('@');
 
   // 1行目をフリーズ（ヘッダー行として）
   if (rowCount >= 2) {
