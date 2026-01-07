@@ -230,6 +230,9 @@ function importCSV(): void {
       <body>
         <h2>CSV インポート (Shift_JIS → UTF-8)</h2>
         <p class="info">PCA会計からエクスポートしたCSVファイルを選択してください</p>
+        <p class="info" style="font-size: 12px; color: #999;">
+          ※ 問題が発生した場合は、ブラウザのコンソール（F12キー）でエラーを確認してください
+        </p>
 
         <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
           <p id="uploadText">📂 クリックしてファイルを選択<br>またはドラッグ&ドロップ</p>
@@ -248,6 +251,11 @@ function importCSV(): void {
 
         <script>
           let selectedFile = null;
+
+          // ページ読み込み時の初期化
+          window.addEventListener('DOMContentLoaded', function() {
+            console.log('CSV Import UI loaded');
+          });
 
           // ドラッグ&ドロップ対応
           const uploadBox = document.getElementById('uploadBox');
@@ -272,45 +280,71 @@ function importCSV(): void {
           });
 
           function handleFileSelect(event) {
-            const files = event.target.files;
-            if (files.length > 0) {
-              handleFile(files[0]);
+            console.log('handleFileSelect called');
+            try {
+              const files = event.target.files;
+              console.log('Selected files:', files.length);
+
+              if (files.length > 0) {
+                console.log('File name:', files[0].name);
+                console.log('File size:', files[0].size);
+                handleFile(files[0]);
+              } else {
+                console.warn('No file selected');
+              }
+            } catch (error) {
+              console.error('Error in handleFileSelect:', error);
+              document.getElementById('status').innerHTML = '<span class="error">エラー: ' + error.message + '</span>';
             }
           }
 
           function handleFile(file) {
-            if (!file.name.toLowerCase().endsWith('.csv')) {
-              document.getElementById('status').innerHTML = '<span class="error">CSVファイルを選択してください</span>';
-              return;
+            console.log('handleFile called with:', file.name);
+
+            try {
+              if (!file.name.toLowerCase().endsWith('.csv')) {
+                document.getElementById('status').innerHTML = '<span class="error">CSVファイルを選択してください</span>';
+                return;
+              }
+
+              selectedFile = file;
+              document.getElementById('fileName').textContent = file.name;
+
+              // ファイル名から日付を抽出してシート名を提案（例: 202509.csv → 202509）
+              const baseName = file.name.replace(/\.csv$/i, '');
+              const dateMatch = baseName.match(/\d{6}/);
+              if (dateMatch) {
+                document.getElementById('sheetName').value = dateMatch[0];
+              } else {
+                document.getElementById('sheetName').value = baseName;
+              }
+
+              document.getElementById('fileInfo').style.display = 'block';
+              document.getElementById('status').innerHTML = '';
+              console.log('File info displayed successfully');
+            } catch (error) {
+              console.error('Error in handleFile:', error);
+              document.getElementById('status').innerHTML = '<span class="error">エラー: ' + error.message + '</span>';
             }
-
-            selectedFile = file;
-            document.getElementById('fileName').textContent = file.name;
-
-            // ファイル名から日付を抽出してシート名を提案（例: 202509.csv → 202509）
-            const baseName = file.name.replace(/\.csv$/i, '');
-            const dateMatch = baseName.match(/\d{6}/);
-            if (dateMatch) {
-              document.getElementById('sheetName').value = dateMatch[0];
-            } else {
-              document.getElementById('sheetName').value = baseName;
-            }
-
-            document.getElementById('fileInfo').style.display = 'block';
-            document.getElementById('status').innerHTML = '';
           }
 
           function importCSVFile() {
+            console.log('importCSVFile called');
+
             if (!selectedFile) {
+              console.warn('No file selected');
               document.getElementById('status').innerHTML = '<span class="error">ファイルを選択してください</span>';
               return;
             }
 
             const sheetName = document.getElementById('sheetName').value.trim();
             if (!sheetName) {
+              console.warn('No sheet name entered');
               document.getElementById('status').innerHTML = '<span class="error">シート名を入力してください</span>';
               return;
             }
+
+            console.log('Starting import for file:', selectedFile.name, 'to sheet:', sheetName);
 
             const btn = document.getElementById('importBtn');
             const status = document.getElementById('status');
@@ -321,56 +355,70 @@ function importCSV(): void {
             const reader = new FileReader();
             reader.onload = function(e) {
               try {
+                console.log('File loaded, size:', e.target.result.byteLength, 'bytes');
                 status.innerHTML = '文字コード変換中...';
 
                 // ArrayBufferをUint8Arrayに変換
                 const uint8Array = new Uint8Array(e.target.result);
+                console.log('Created Uint8Array, length:', uint8Array.length);
 
                 // Shift_JISからUnicodeに変換
+                console.log('Converting from Shift_JIS to Unicode...');
                 const unicodeArray = Encoding.convert(uint8Array, {
                   to: 'UNICODE',
                   from: 'SJIS'
                 });
+                console.log('Converted to Unicode, length:', unicodeArray.length);
 
                 // Unicodeの数値配列を文字列に変換
                 const csvText = Encoding.codeToString(unicodeArray);
+                console.log('Converted to string, length:', csvText.length);
 
                 status.innerHTML = 'CSV解析中...';
 
                 // CSVを解析（改行で分割して2次元配列に変換）
                 const lines = csvText.split(/\r?\n/);
+                console.log('Split into lines:', lines.length);
+
                 const data = lines.map(line => {
                   // 簡易CSVパーサー（カンマ区切り）
                   return line.split(',');
                 });
+                console.log('Parsed CSV data, rows:', data.length);
 
                 status.innerHTML = 'スプレッドシートに書き込み中...';
 
                 // サーバー側にデータを送信
+                console.log('Sending data to server...');
                 google.script.run
                   .withSuccessHandler(function(result) {
+                    console.log('Import successful:', result);
                     status.innerHTML = '<span class="success">✅ インポート完了！<br>' +
                       'シート「' + sheetName + '」に ' + result.rowCount + ' 行を書き込みました。<br>' +
                       'このウィンドウを閉じてください。</span>';
                     btn.disabled = false;
                   })
                   .withFailureHandler(function(error) {
+                    console.error('Import failed:', error);
                     status.innerHTML = '<span class="error">❌ エラー: ' + error.message + '</span>';
                     btn.disabled = false;
                   })
                   .writeCSVToSheet(sheetName, data);
 
               } catch (error) {
+                console.error('Error during import:', error);
                 status.innerHTML = '<span class="error">❌ エラー: ' + error.message + '</span>';
                 btn.disabled = false;
               }
             };
 
-            reader.onerror = function() {
+            reader.onerror = function(error) {
+              console.error('FileReader error:', error);
               status.innerHTML = '<span class="error">❌ ファイル読み込みエラー</span>';
               btn.disabled = false;
             };
 
+            console.log('Starting to read file as ArrayBuffer...');
             reader.readAsArrayBuffer(selectedFile);
           }
         </script>
