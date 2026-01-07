@@ -128,15 +128,8 @@ function getCSVContent(): string {
     throw new Error('出力シートにデータがありません。先に変換を実行してください。');
   }
 
-  // ヘッダー行を除外して2行目以降のデータのみを取得
-  const data = allData.slice(1);
-
-  if (data.length === 0) {
-    throw new Error('出力シートにデータ行がありません。');
-  }
-
   // CSV形式に変換（ダブルクォートなし、Windows CRLF改行）
-  const csvContent = data.map(row =>
+  const csvContent = allData.map(row =>
     row.map(cell => {
       // 日付は yyyy/M/d 形式に整形（1桁の月日は先頭0なし）
       if (cell instanceof Date) {
