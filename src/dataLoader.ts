@@ -85,7 +85,7 @@ function loadTaxMapping(ss: GoogleAppsScript.Spreadsheet.Spreadsheet): TaxMappin
   // ヘッダー行をスキップして処理
   for (let i = 1; i < values.length; i++) {
     const row = values[i];
-    const pcaCode = row[0];     // PCA公益コード（列A）
+    const pcaCode = row[0];     // PCAコード（列A）
     const icsCode = row[1];     // ICSコード（列B）
 
     if (pcaCode && icsCode) {
@@ -106,7 +106,7 @@ function createTaxMappingSheet(
 
   // ヘッダーとデフォルトデータ
   const data: (string | number)[][] = [
-    ['PCA公益コード', 'ICSコード', '説明'],
+    ['PCAコード', 'ICSコード', '説明'],
     ['00', '04', '消費税に関係ない → 不課税'],
     ['99', '04', '不明 → 不課税'],
     ['A0', '02', '非課税売上'],
@@ -229,7 +229,7 @@ function importCSV(): void {
       </head>
       <body>
         <h2>CSV インポート (Shift_JIS → UTF-8)</h2>
-        <p class="info">PCA公益法人会計からエクスポートしたCSVファイルを選択してください</p>
+        <p class="info">PCA会計からエクスポートしたCSVファイルを選択してください</p>
 
         <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
           <p id="uploadText">📂 クリックしてファイルを選択<br>またはドラッグ&ドロップ</p>
